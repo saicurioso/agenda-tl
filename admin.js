@@ -54,6 +54,7 @@ async function renderAdmin(){
     }
     $('#stats').hidden=false;
     await loadStats();
+    await loadMetaAdmin();
   const{data,error}=await db.from('event_submissions').select('*').eq('status','pending').order('created_at',{ascending:true});
   if(error){console.error(error);$('#adminList').innerHTML='<div class="empty-admin"><h3>Não consegui carregar os envios.</h3><p>Tente atualizar a página.</p></div>';return}
     const list=data||[];
@@ -130,3 +131,92 @@ document.addEventListener('click',async e=>{
 });
 setAuthMode('login');
 renderAdmin();
+async function loadMetaAdmin(){
+  const statusEl=$('#metaCredentialStatus');if(!statusEl)return;
+  try{
+    const [{data:status,error:statusError},{data:connections,error:connError},{data:sources,error:sourceError}]=await Promise.all([
+      db.rpc('meta_admin_status'),
+      db.rpc('meta_admin_connections'),
+      db.from('news_sources').select('id,name,platform,handle,external_id,active').eq('source_kind','social').order('created_at',{ascending:false})
+    ]);
+    if(statusError)throw statusError;
+    const ready=!!(status?.app_id_configured&&status?.app_secret_configured);
+    statusEl.textContent=ready?'Configuradas ✓':'Faltam App ID / Secret';
+    statusEl.className=ready?'meta-ok':'meta-warn';
+    $('#connectMetaBtn').disabled=!ready;
+    $('#metaConnectionCount').textContent=status?.connections||0;
+    $('#metaSourceCount').textContent=status?.social_sources||0;
+    $('#metaRedirectUri').textContent=status?.redirect_uri||'—';
+    $('#metaDeletionUrl').textContent=status?.data_deletion_url||'—';
+
+    const list=connections||[];
+    $('#metaConnections').innerHTML=list.length?list.map(c=>`<div class="meta-list-item"><div><b>${esc(c.instagram_username?'Instagram @'+c.instagram_username:(c.page_name||'Página Meta'))}</b><small>${esc(c.page_name||'')} • Page ID ${esc(c.page_id||'')}</small></div></div>`).join(''):'<div class="meta-list-item"><div><b>Nenhuma conta conectada</b><small>Configure as credenciais e use o botão Conectar.</small></div></div>';
+
+    if(sourceError)throw sourceError;
+    const sourceList=sources||[];
+    $('#socialSourcesList').innerHTML=sourceList.length?sourceList.map(s=>`<div class="meta-list-item"><div><b>${esc(s.name)}</b><small>${esc((s.platform||'social').toUpperCase())} • ${esc(s.handle||s.external_id||'')}</small></div><button class="meta-remove" data-remove-source="${s.id}" title="Remover">×</button></div>`).join(''):'<div class="meta-list-item"><div><b>Nenhuma fonte social</b><small>Adicione perfis e Páginas que divulgam eventos.</small></div></div>';
+  }catch(err){
+    console.error('loadMetaAdmin',err);
+    statusEl.textContent='Não foi possível consultar';
+    statusEl.className='meta-warn';
+  }
+}
+async function saveMetaCredentials(e){
+  e.preventDefault();
+  const fd=new FormData(e.currentTarget),appId=String(fd.get('appId')||'').trim(),appSecret=String(fd.get('appSecret')||'').trim();
+  const btn=e.currentTarget.querySelector('button[type="submit"]');
+  if(!appId||!appSecret){toast('Informe App ID e App Secret');return}
+  btn.disabled=true;btn.textContent='Salvando…';
+  try{
+    const{data,error}=await db.rpc('set_meta_app_credentials',{p_app_id:appId,p_app_secret:appSecret});
+    if(error||data!==true)throw error||new Error('save_failed');
+    e.currentTarget.reset();toast('Credenciais salvas no Vault ✓');await loadMetaAdmin();
+  }catch(err){console.error(err);toast('Não consegui salvar as credenciais')}
+  finally{btn.disabled=false;btn.textContent='Salvar no cofre'}
+}
+async function connectMeta(){
+  const btn=$('#connectMetaBtn');btn.disabled=true;btn.textContent='Preparando conexão…';
+  try{
+    const{data,error}=await db.functions.invoke('meta-oauth-start',{body:{}});
+    if(error||!data?.url)throw error||new Error(data?.error||'oauth_start_failed');
+    location.href=data.url;
+  }catch(err){console.error(err);toast('Não consegui iniciar a conexão com a Meta');btn.disabled=false;btn.textContent='Conectar Facebook / Instagram'}
+}
+async function addSocialSource(e){
+  e.preventDefault();
+  const fd=new FormData(e.currentTarget),platform=String(fd.get('platform')||''),name=String(fd.get('name')||'').trim(),raw=String(fd.get('handle')||'').trim();
+  const handle=raw.replace(/^@/,'').replace(/^https?:\/\/(www\.)?(instagram\.com|facebook\.com)\//i,'').replace(/\/$/,'');
+  if(!platform||!name||!handle){toast('Preencha a fonte');return}
+  const homepage=platform==='instagram'?`https://www.instagram.com/${handle}/`:`https://www.facebook.com/${handle}/`;
+  const payload={name,homepage_url:homepage,feed_url:`social:${platform}:${handle.toLowerCase()}`,source_kind:'social',fetch_mode:'social_api',platform,handle,active:true,priority:50};
+  const{error}=await db.from('news_sources').insert(payload);
+  if(error){console.error(error);toast(error.code==='23505'?'Essa fonte já está cadastrada':'Não consegui adicionar a fonte');return}
+  e.currentTarget.reset();toast('Fonte social adicionada ✓');await loadMetaAdmin();
+}
+async function testSocialCollector(){
+  const btn=$('#testSocialCollectorBtn');btn.disabled=true;btn.textContent='Coletando…';
+  try{
+    const{data,error}=await db.functions.invoke('meta-collect-social',{body:{}});
+    if(error)throw error;
+    if(data?.configured===false){toast('Conecte uma conta Meta primeiro')}
+    else{
+      const ok=(data?.report||[]).filter(x=>x.ok).length,visible=(data?.report||[]).reduce((n,x)=>n+(x.visible||0),0);
+      toast(`Coleta concluída: ${ok} fonte(s), ${visible} rolê(s) futuro(s)`);
+    }
+  }catch(err){console.error(err);toast('Falha ao testar a coleta')}
+  finally{btn.disabled=false;btn.textContent='Testar coleta agora'}
+}
+$('#metaCredentialsForm')?.addEventListener('submit',saveMetaCredentials);
+$('#connectMetaBtn')?.addEventListener('click',connectMeta);
+$('#socialSourceForm')?.addEventListener('submit',addSocialSource);
+$('#testSocialCollectorBtn')?.addEventListener('click',testSocialCollector);
+$('#refreshMetaBtn')?.addEventListener('click',loadMetaAdmin);
+document.addEventListener('click',async e=>{
+  const remove=e.target.closest('[data-remove-source]');
+  if(!remove)return;
+  remove.disabled=true;
+  const{error}=await db.from('news_sources').delete().eq('id',remove.dataset.removeSource).eq('source_kind','social');
+  if(error){console.error(error);toast('Não consegui remover a fonte');remove.disabled=false;return}
+  toast('Fonte removida');await loadMetaAdmin();
+});
+if(new URLSearchParams(location.search).get('meta')==='connected'){setTimeout(()=>toast('Meta conectada ✓'),600)}
