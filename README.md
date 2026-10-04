@@ -1,21 +1,24 @@
-# Agenda TL
+# De Rolê
 
-Portal gratuito e mobile-first de eventos de Três Lagoas/MS.
+Plataforma gratuita e mobile-first para descobrir eventos e experiências em Três Lagoas/MS.
+
+## Identidade
+De Rolê usa uma linguagem jovem e urbana, com coral, amarelo, violeta, grafite e fundo areia.
 
 ## Stack
-- GitHub Pages (hospedagem estática gratuita)
-- Supabase (banco, autenticação e Storage)
-- HTML/CSS/JavaScript sem framework
+- GitHub Pages
+- Supabase
+- HTML/CSS/JavaScript
 
 ## Funcionalidades
-- Agenda pública com busca e filtros
-- Categorias carregadas do Supabase
+- Busca e filtros de rolês
+- Categorias
 - Eventos aprovados em tempo real
-- Favoritos locais no navegador
-- Envio público de eventos para moderação
-- Painel administrativo com login
-- Aprovação/recusa de envios
+- Favoritos locais
+- Envio público para moderação
+- Painel administrativo
+- Aprovação/recusa
 - PWA instalável
 
 ## Segurança
-A chave presente em `config.js` é a Publishable Key do Supabase, própria para uso no navegador. O acesso aos dados é limitado por RLS. Nenhuma Service Role Key é enviada ao frontend.
+O frontend usa apenas a Publishable Key do Supabase. Permissões e dados administrativos são protegidos por RLS e regras específicas do backend.
