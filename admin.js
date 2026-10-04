@@ -80,7 +80,7 @@ async function handleAuth(e){
       if(error)throw error;
       if(!data?.session)throw new Error('session_not_created');
       setStatus('Acesso liberado. Abrindo painel…');
-      window.location.replace('admin.html?session=1&v=8');
+      window.location.replace('admin.html?session=1&v=10');
       return;
     }else{
       const{data,error}=await db.functions.invoke('bootstrap-admin',{body:{email,password,code:activationCode}});
@@ -88,8 +88,8 @@ async function handleAuth(e){
       const{data:loginData,error:loginError}=await db.auth.signInWithPassword({email,password});
       if(loginError)throw loginError;
       if(!loginData?.session)throw new Error('session_not_created');
-      toast('Conta administrativa criada ✓');
-      window.location.replace('admin.html?session=1&v=8');
+      toast('Conta do De Rolê criada ✓');
+      window.location.replace('admin.html?session=1&v=10');
       return;
     }
   }catch(err){
@@ -119,13 +119,13 @@ document.addEventListener('click',async e=>{
     approve.disabled=true;approve.textContent='Aprovando…';
     const{error}=await db.rpc('approve_event_submission',{p_submission_id:approve.dataset.approve});
     if(error){console.error(error);toast('Não foi possível aprovar');approve.disabled=false;approve.textContent='Aprovar';return}
-    toast('Evento publicado ✓');await renderAdmin()
+    toast('Rolê publicado ✓');await renderAdmin()
   }
   if(reject){
     reject.disabled=true;reject.textContent='Recusando…';
     const{error}=await db.rpc('reject_event_submission',{p_submission_id:reject.dataset.reject});
     if(error){console.error(error);toast('Não foi possível recusar');reject.disabled=false;reject.textContent='Recusar';return}
-    toast('Evento recusado');await renderAdmin()
+    toast('Rolê recusado');await renderAdmin()
   }
 });
 setAuthMode('login');
