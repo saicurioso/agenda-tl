@@ -1,4 +1,4 @@
-const CACHE='derole-v16';
+const CACHE='derole-v17';
 const STATIC=['./','./index.html','./styles.css','./app.js','./config.js','./icon.svg','./manifest.webmanifest'];
 
 self.addEventListener('install',event=>{
