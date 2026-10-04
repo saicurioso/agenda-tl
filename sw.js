@@ -1,5 +1,5 @@
-const CACHE='derole-v17';
-const STATIC=['./','./index.html','./styles.css','./app.js','./config.js','./icon.svg','./manifest.webmanifest'];
+const CACHE='derole-v18';
+const STATIC=['./','./index.html','./styles.css','./app.js','./config.js','./icon.svg','./manifest.webmanifest','./assets/fallback-derole.svg','./assets/fallback-eventos.svg','./assets/fallback-cultura.svg','./assets/fallback-esporte.svg','./assets/fallback-gastronomia.svg','./assets/fallback-oportunidades.svg','./assets/fallback-turismo.svg'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
