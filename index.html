@@ -18,6 +18,7 @@
     <nav class="desktop-nav" aria-label="Navegação principal">
       <a href="#agenda">Rolês</a>
       <a href="#categorias">Categorias</a>
+      <a href="#radar">Radar</a>
       <a href="#sobre">Sobre</a>
     </nav>
     <div class="top-actions">
@@ -92,6 +93,16 @@
       </div>
     </section>
 
+    <section class="section radar-section" id="radar">
+      <div class="section-head">
+        <div><span class="eyebrow purple">RADAR DA CIDADE</span><h2>O que tá acontecendo por aqui</h2></div>
+        <span class="section-note" id="newsCount">Atualizando…</span>
+      </div>
+      <div class="radar-note"><span>◉</span><p>Manchetes de fontes locais e oficiais. O De Rolê mostra um resumo curto e sempre leva você para a matéria original.</p></div>
+      <div class="news-grid" id="newsGrid"></div>
+      <div class="news-empty" id="newsEmpty" hidden><b>Radar atualizando</b><span>As notícias locais vão aparecer aqui.</span></div>
+    </section>
+
     <section class="submit-banner">
       <div class="submit-icon">✦</div>
       <div>
@@ -113,7 +124,7 @@
   <footer>
     <div class="footer-brand"><span class="wordmark mini"><span>De</span><b>Rolê</b></span></div>
     <p>Feito pra conectar gente, cidade e bons rolês.</p>
-    <div class="footer-links"><a href="#agenda">Rolês</a><button data-open-submit>Enviar rolê</button><a href="admin.html">Admin</a></div>
+    <div class="footer-links"><a href="#agenda">Rolês</a><a href="#radar">Radar</a><button data-open-submit>Enviar rolê</button><a href="admin.html">Admin</a></div>
     <small>De Rolê • Três Lagoas/MS • 2026</small>
   </footer>
 
@@ -121,8 +132,8 @@
     <a href="#top" class="active"><span>⌂</span>Início</a>
     <a href="#agenda"><span>⌕</span>Explorar</a>
     <button class="nav-create" data-open-submit><span>＋</span><small>Enviar rolê</small></button>
+    <a href="#radar"><span>◉</span>Radar</a>
     <button id="favoritesBtn"><span>♡</span>Salvos</button>
-    <a href="#sobre"><span>☺</span>Sobre</a>
   </nav>
 
   <dialog id="eventDialog" class="modal event-modal">
