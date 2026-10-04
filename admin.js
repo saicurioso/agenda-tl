@@ -81,7 +81,7 @@ async function handleAuth(e){
       if(error)throw error;
       if(!data?.session)throw new Error('session_not_created');
       setStatus('Acesso liberado. Abrindo painel…');
-      window.location.replace('admin.html?session=1&v=10');
+      window.location.replace('admin.html?session=1&v=22');
       return;
     }else{
       const{data,error}=await db.functions.invoke('bootstrap-admin',{body:{email,password,code:activationCode}});
@@ -90,7 +90,7 @@ async function handleAuth(e){
       if(loginError)throw loginError;
       if(!loginData?.session)throw new Error('session_not_created');
       toast('Conta do De Rolê criada ✓');
-      window.location.replace('admin.html?session=1&v=10');
+      window.location.replace('admin.html?session=1&v=22');
       return;
     }
   }catch(err){
