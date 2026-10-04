@@ -109,6 +109,10 @@
             <input id="adminPassword" name="password" type="password" required minlength="6" autocomplete="current-password" placeholder="••••••••">
             <button class="toggle-pass" type="button" id="togglePassword" aria-label="Mostrar senha">◉</button>
           </div>
+          <div class="field" id="activationField" hidden>
+            <label for="activationCode">Código de ativação</label>
+            <input id="activationCode" name="activationCode" type="text" autocomplete="one-time-code" placeholder="Cole o código enviado no chat">
+          </div>
           <button class="primary-action" id="authSubmitBtn" type="submit">Entrar no painel</button>
           <div class="auth-status" id="authStatus"></div>
         </form>
