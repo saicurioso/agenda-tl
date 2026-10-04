@@ -17,7 +17,9 @@ function setAuthMode(mode){
   document.querySelectorAll('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===mode));
   const pass=$('#adminPassword');
   if(pass)pass.autocomplete=mode==='login'?'current-password':'new-password';
-  $('#authHelper').innerHTML=mode==='login'?'Primeira vez aqui? Toque em <strong>Primeiro acesso</strong>.':'A conta será criada no Supabase do Agenda TL. Depois você ativa o acesso administrativo.';
+  const activation=$('#activationField');
+  if(activation)activation.hidden=mode!=='signup';
+  $('#authHelper').innerHTML=mode==='login'?'Primeira vez aqui? Toque em <strong>Primeiro acesso</strong>.':'Use o código de ativação inicial. A conta será criada, confirmada e conectada automaticamente.';
   setStatus('');
   setAuthLoading(false);
 }
@@ -56,8 +58,9 @@ async function renderAdmin(){
 async function handleAuth(e){
   e.preventDefault();
   const fd=new FormData(e.currentTarget);
-  const email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||'');
-  if(!email||password.length<6){setStatus('Preencha o e-mail e use uma senha com pelo menos 6 caracteres.');return}
+  const email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||''),activationCode=String(fd.get('activationCode')||'').trim();
+  if(authMode==='login'&&(!email||password.length<6)){setStatus('Preencha o e-mail e use uma senha com pelo menos 6 caracteres.');return}
+  if(authMode==='signup'&&(!email||password.length<8||!activationCode)){setStatus('No primeiro acesso, informe e-mail, uma senha com pelo menos 8 caracteres e o código de ativação.');return}
   setAuthLoading(true);setStatus('');
   try{
     if(authMode==='login'){
@@ -65,14 +68,16 @@ async function handleAuth(e){
       if(error)throw error;
       await renderAdmin();
     }else{
-      const{data,error}=await db.auth.signUp({email,password});
-      if(error)throw error;
-      if(data.session){toast('Conta criada ✓');await renderAdmin()}
-      else setStatus('Conta criada. Confira seu e-mail para confirmar o cadastro e depois volte para entrar.');
+      const{data,error}=await db.functions.invoke('bootstrap-admin',{body:{email,password,code:activationCode}});
+      if(error||data?.ok!==true)throw error||new Error(data?.error||'bootstrap_failed');
+      const{error:loginError}=await db.auth.signInWithPassword({email,password});
+      if(loginError)throw loginError;
+      toast('Conta administrativa criada ✓');
+      await renderAdmin();
     }
   }catch(err){
     console.error(err);
-    setStatus(authMode==='login'?'Não consegui entrar. Confira e-mail e senha.':'Não consegui criar a conta. Talvez este e-mail já esteja cadastrado.');
+    setStatus(authMode==='login'?'Não consegui entrar. Confira e-mail e senha.':'Não consegui ativar a conta. Confira o código e tente novamente.');
   }finally{setAuthLoading(false)}
 }
 async function claimInitialAdmin(){
