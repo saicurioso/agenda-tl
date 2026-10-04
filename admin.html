@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#fff8f1">
   <title>Painel — De Rolê</title>
   <link rel="icon" href="icon.svg">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=21">
   <style>
     body{min-height:100dvh;background:
       radial-gradient(circle at 0% 0%,rgba(255,107,74,.18),transparent 28rem),
@@ -62,13 +62,27 @@
     .empty-admin{background:#fff;border-radius:30px;padding:54px 24px;text-align:center;box-shadow:0 20px 50px rgba(31,41,55,.05)}
     .empty-admin h3{font-size:28px;letter-spacing:-.04em;margin:0 0 10px}
     .empty-admin p{color:var(--muted);max-width:520px;margin:0 auto 18px;line-height:1.55}
+    .meta-admin{margin-top:34px;background:rgba(255,255,255,.78);border:1px solid rgba(31,41,55,.07);border-radius:30px;padding:24px;box-shadow:0 18px 50px rgba(31,41,55,.06)}
+    .meta-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:20px}
+    .meta-head h2{font-size:34px;letter-spacing:-.045em;margin:5px 0 7px}.meta-head p{color:var(--muted);margin:0;line-height:1.5}
+    .meta-status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+    .meta-status-card{background:#fff;border-radius:20px;padding:16px}.meta-status-card small{display:block;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.8px}.meta-status-card b{display:block;margin-top:7px;font-size:15px}
+    .meta-ok{color:#277441}.meta-warn{color:#b54708}
+    .meta-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}.meta-box-panel{background:#fff;border-radius:22px;padding:18px}
+    .meta-box-panel h3{margin:0 0 12px;font-size:19px;letter-spacing:-.025em}.meta-box-panel p{color:var(--muted);font-size:12px;line-height:1.5}
+    .meta-form{display:grid;gap:10px}.meta-form input,.meta-form select{width:100%;height:48px;border:1px solid var(--line);border-radius:14px;background:#fff;padding:0 13px;outline:0}
+    .meta-form input:focus,.meta-form select:focus{border-color:var(--coral);box-shadow:0 0 0 4px rgba(255,107,74,.09)}
+    .meta-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}.meta-actions .btn{border-radius:14px}
+    .meta-list{display:grid;gap:8px;margin-top:12px}.meta-list-item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f8f4ee;border-radius:15px;padding:11px 12px}.meta-list-item b{font-size:12px}.meta-list-item small{display:block;color:var(--muted);margin-top:2px}
+    .meta-remove{border:0;background:#ffe3dd;color:#9f2d20;border-radius:999px;width:32px;height:32px;font-weight:900}
+    .meta-legal{margin-top:16px;padding:14px 16px;background:#eee9ff;border-radius:17px;font-size:12px;line-height:1.55;color:#544b7a}.meta-legal a{text-decoration:underline;font-weight:800}
     @media(max-width:720px){
       .admin-nav{padding:14px 14px 0}.ghost-link{padding:10px 12px}
       .admin-shell{padding:12px 14px 40px}.auth-wrap{min-height:calc(100dvh - 92px);padding:10px 0 28px}
       .auth-card{border-radius:28px;padding:24px 20px 22px}.auth-card h1{font-size:48px}
       .dashboard-hero{display:block;margin-top:16px}.dashboard-chip{margin-bottom:12px}.dashboard-hero h1{font-size:52px}
       .stats{grid-template-columns:1fr 1fr}.stat:first-child{grid-column:1/-1}.stat{min-height:112px;border-radius:22px;padding:20px}.stat strong{font-size:40px}
-      .admin-card{grid-template-columns:1fr;border-radius:23px;padding:18px}.admin-actions .btn{flex:1}
+      .admin-card{grid-template-columns:1fr;border-radius:23px;padding:18px}.admin-actions .btn{flex:1}.meta-layout{grid-template-columns:1fr}.meta-status-grid{grid-template-columns:1fr}.meta-admin{padding:18px}.meta-head{display:block}.meta-head .ghost-link{margin-top:12px}
     }
   </style>
 </head>
@@ -130,12 +144,68 @@
         <div class="stat"><strong id="totalCount">0</strong><small>TOTAL</small></div>
       </section>
       <section class="admin-list" id="adminList"></section>
+
+      <section class="meta-admin" id="metaAdmin">
+        <div class="meta-head">
+          <div>
+            <span class="eyebrow">META • INSTAGRAM + FACEBOOK</span>
+            <h2>Radar social</h2>
+            <p>Conecte a conta do De Rolê e monitore perfis profissionais e Páginas que divulgam eventos.</p>
+          </div>
+          <button class="ghost-link" id="refreshMetaBtn" type="button">Atualizar status</button>
+        </div>
+
+        <div class="meta-status-grid">
+          <div class="meta-status-card"><small>CREDENCIAIS META</small><b id="metaCredentialStatus" class="meta-warn">Verificando…</b></div>
+          <div class="meta-status-card"><small>CONTAS CONECTADAS</small><b id="metaConnectionCount">0</b></div>
+          <div class="meta-status-card"><small>FONTES SOCIAIS</small><b id="metaSourceCount">0</b></div>
+        </div>
+
+        <div class="meta-layout">
+          <div class="meta-box-panel">
+            <h3>1. Configurar App da Meta</h3>
+            <p>Cole o App ID e o App Secret. O segredo é enviado ao Supabase e armazenado no Vault criptografado; ele não fica salvo neste navegador.</p>
+            <form id="metaCredentialsForm" class="meta-form">
+              <input id="metaAppId" name="appId" placeholder="Meta App ID" autocomplete="off" required>
+              <input id="metaAppSecret" name="appSecret" type="password" placeholder="Meta App Secret" autocomplete="new-password" required>
+              <button class="btn btn-primary" type="submit">Salvar no cofre</button>
+            </form>
+            <div class="meta-actions">
+              <button class="btn btn-dark" id="connectMetaBtn" type="button" disabled>Conectar Facebook / Instagram</button>
+            </div>
+            <div class="meta-list" id="metaConnections"></div>
+          </div>
+
+          <div class="meta-box-panel">
+            <h3>2. Fontes para monitorar</h3>
+            <p>Cadastre perfis profissionais do Instagram e Páginas do Facebook que costumam divulgar eventos locais.</p>
+            <form id="socialSourceForm" class="meta-form">
+              <select name="platform" required><option value="instagram">Instagram</option><option value="facebook">Facebook</option></select>
+              <input name="name" placeholder="Nome da fonte (ex.: Casa de Shows X)" maxlength="120" required>
+              <input name="handle" placeholder="@usuario ou Page ID / usuário" maxlength="180" required>
+              <button class="btn btn-primary" type="submit">Adicionar fonte</button>
+            </form>
+            <div class="meta-actions">
+              <button class="btn" id="testSocialCollectorBtn" type="button">Testar coleta agora</button>
+            </div>
+            <div class="meta-list" id="socialSourcesList"></div>
+          </div>
+        </div>
+
+        <div class="meta-legal">
+          <b>URLs já preparadas para o cadastro na Meta:</b><br>
+          OAuth Redirect: <span id="metaRedirectUri">—</span><br>
+          Política de Privacidade: <a href="privacy.html" target="_blank">privacy.html</a><br>
+          Exclusão de Dados: <span id="metaDeletionUrl">—</span><br>
+          <a href="META_SETUP.md" target="_blank">Abrir checklist de configuração →</a>
+        </div>
+      </section>
     </section>
   </main>
 
   <div class="toast" id="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js"></script>
+  <script src="admin.js?v=21"></script>
 </body>
 </html>
