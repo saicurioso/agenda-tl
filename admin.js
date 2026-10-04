@@ -134,12 +134,12 @@ renderAdmin();
 async function loadMetaAdmin(){
   const statusEl=$('#metaCredentialStatus');if(!statusEl)return;
   try{
-    const [{data:status,error:statusError},{data:connections,error:connError},{data:sources,error:sourceError}]=await Promise.all([
-      db.rpc('meta_admin_status'),
-      db.rpc('meta_admin_connections'),
+    const [{data:meta,error:metaError},{data:sources,error:sourceError}]=await Promise.all([
+      db.functions.invoke('meta-admin',{body:{action:'status'}}),
       db.from('news_sources').select('id,name,platform,handle,external_id,active').eq('source_kind','social').order('created_at',{ascending:false})
     ]);
-    if(statusError)throw statusError;
+    if(metaError||meta?.ok!==true)throw metaError||new Error(meta?.error||'meta_status_failed');
+    const status=meta.status||{},connections=meta.connections||[];
     const ready=!!(status?.app_id_configured&&status?.app_secret_configured);
     statusEl.textContent=ready?'Configuradas ✓':'Faltam App ID / Secret';
     statusEl.className=ready?'meta-ok':'meta-warn';
@@ -168,8 +168,8 @@ async function saveMetaCredentials(e){
   if(!appId||!appSecret){toast('Informe App ID e App Secret');return}
   btn.disabled=true;btn.textContent='Salvando…';
   try{
-    const{data,error}=await db.rpc('set_meta_app_credentials',{p_app_id:appId,p_app_secret:appSecret});
-    if(error||data!==true)throw error||new Error('save_failed');
+    const{data,error}=await db.functions.invoke('meta-admin',{body:{action:'set_credentials',app_id:appId,app_secret:appSecret}});
+    if(error||data?.ok!==true)throw error||new Error(data?.error||'save_failed');
     e.currentTarget.reset();toast('Credenciais salvas no Vault ✓');await loadMetaAdmin();
   }catch(err){console.error(err);toast('Não consegui salvar as credenciais')}
   finally{btn.disabled=false;btn.textContent='Salvar no cofre'}
