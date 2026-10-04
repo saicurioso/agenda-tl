@@ -1,1 +1,111 @@
-const {supabaseUrl,supabaseKey}=window.AGENDA_CONFIG;const db=window.supabase.createClient(supabaseUrl,supabaseKey),$=s=>document.querySelector(s),esc=(s='')=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));function toast(msg){const e=$('#toast');e.textContent=msg;e.classList.add('show');clearTimeout(window.__t);window.__t=setTimeout(()=>e.classList.remove('show'),2200)}function setStatus(msg){$('#authStatus').textContent=msg||''}async function session(){const{data}=await db.auth.getSession();return data.session}async function isAdmin(){const{data,error}=await db.rpc('my_admin_status');if(error)return false;return data===true}async function loadStats(){const[{count:pending},{count:approved}]=await Promise.all([db.from('event_submissions').select('*',{count:'exact',head:true}).eq('status','pending'),db.from('events').select('*',{count:'exact',head:true}).eq('status','approved')]);$('#pendingCount').textContent=pending||0;$('#approvedCount').textContent=approved||0;$('#totalCount').textContent=(pending||0)+(approved||0)}async function renderAdmin(){const s=await session();if(!s){$('#loginPanel').hidden=false;$('#adminPanel').hidden=true;return}$('#loginPanel').hidden=true;const ok=await isAdmin();if(!ok){$('#adminPanel').hidden=false;$('#adminList').innerHTML='<div class="empty-admin"><h3>Primeiro acesso administrativo</h3><p>Esta conta ainda não é administradora. Para assumir a administração inicial do Agenda TL, informe o código de ativação.</p><div style="max-width:420px;margin:18px auto"><input id="bootstrapCode" placeholder="Código de ativação" style="width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px"><button class="btn btn-dark" id="claimAdminBtn" style="width:100%">Ativar administrador</button></div><button class="btn" id="logoutBtnInline">Sair desta conta</button></div>';$('#stats').hidden=true;return}$('#stats').hidden=false;$('#adminPanel').hidden=false;await loadStats();const{data,error}=await db.from('event_submissions').select('*').eq('status','pending').order('created_at',{ascending:true});if(error){console.error(error);$('#adminList').innerHTML='<div class="empty-admin"><h3>Erro ao carregar envios.</h3></div>';return}const list=data||[];$('#adminList').innerHTML=list.length?list.map(e=>`<article class="admin-card"><div><span class="eyebrow">${esc((e.category_slug||'evento').toUpperCase())}</span><h3>${esc(e.title)}</h3><p>📅 ${esc(e.event_date)} ${e.event_time?'• '+esc(String(e.event_time).slice(0,5)):''} &nbsp; ⌖ ${esc(e.venue_name)}</p><p>${esc(e.organizer_name)} ${e.contact?'• '+esc(e.contact):''}</p><p>${esc(e.description||'')}</p>${e.price_text?`<p><b>Valor informado:</b> ${esc(e.price_text)}</p>`:''}</div><div class="admin-actions"><button class="btn btn-dark" data-approve="${e.id}">Aprovar</button><button class="btn btn-danger" data-reject="${e.id}">Recusar</button></div></article>`).join(''):'<div class="empty-admin"><h3>Nenhum evento aguardando</h3><p>Os novos envios aparecerão aqui automaticamente.</p></div>'}async function signIn(e){e.preventDefault();setStatus('Entrando…');const fd=new FormData(e.currentTarget),{error}=await db.auth.signInWithPassword({email:String(fd.get('email')).trim(),password:String(fd.get('password'))});if(error){setStatus('Não foi possível entrar. Confira e-mail e senha.');return}setStatus('');await renderAdmin()}async function signUp(){const fd=new FormData($('#loginForm')),email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||'');if(!email||password.length<6){setStatus('Informe um e-mail e uma senha com pelo menos 6 caracteres.');return}setStatus('Criando conta…');const{data,error}=await db.auth.signUp({email,password});if(error){setStatus(error.message);return}setStatus(data.session?'Conta criada e conectada. Use o código de ativação para assumir o primeiro acesso administrativo.':'Conta criada. Confira seu e-mail para confirmar o cadastro.');if(data.session)await renderAdmin()}async function claimInitialAdmin(){const input=$('#bootstrapCode'),btn=$('#claimAdminBtn'),code=input?.value.trim();if(!code){toast('Informe o código de ativação');return}btn.disabled=true;btn.textContent='Ativando…';const{data,error}=await db.rpc('claim_initial_admin',{p_code:code});if(error||data!==true){console.error(error);toast('Código inválido ou ativação indisponível');btn.disabled=false;btn.textContent='Ativar administrador';return}toast('Administrador ativado ✓');await renderAdmin()}$('#loginForm').addEventListener('submit',signIn);$('#signupBtn').addEventListener('click',signUp);$('#logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();renderAdmin()});document.addEventListener('click',async e=>{if(e.target.id==='logoutBtnInline'){await db.auth.signOut();renderAdmin();return}if(e.target.id==='claimAdminBtn'){await claimInitialAdmin();return}const approve=e.target.closest('[data-approve]'),reject=e.target.closest('[data-reject]');if(approve){approve.disabled=true;const{error}=await db.rpc('approve_event_submission',{p_submission_id:approve.dataset.approve});if(error){console.error(error);toast('Não foi possível aprovar');approve.disabled=false;return}toast('Evento aprovado ✓');await renderAdmin()}if(reject){reject.disabled=true;const{error}=await db.rpc('reject_event_submission',{p_submission_id:reject.dataset.reject});if(error){console.error(error);toast('Não foi possível recusar');reject.disabled=false;return}toast('Evento recusado');await renderAdmin()}});db.auth.onAuthStateChange(()=>setTimeout(renderAdmin,0));renderAdmin();
+const {supabaseUrl,supabaseKey}=window.AGENDA_CONFIG;
+const db=window.supabase.createClient(supabaseUrl,supabaseKey);
+const $=s=>document.querySelector(s);
+const esc=(s='')=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+let authMode='login';
+
+function toast(msg){const e=$('#toast');e.textContent=msg;e.classList.add('show');clearTimeout(window.__t);window.__t=setTimeout(()=>e.classList.remove('show'),2200)}
+function setStatus(msg){$('#authStatus').textContent=msg||''}
+function setAuthLoading(on){
+  const b=$('#authSubmitBtn');
+  if(!b)return;
+  b.disabled=on;
+  b.textContent=on?(authMode==='login'?'Entrando…':'Criando conta…'):(authMode==='login'?'Entrar no painel':'Criar minha conta');
+}
+function setAuthMode(mode){
+  authMode=mode;
+  document.querySelectorAll('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===mode));
+  const pass=$('#adminPassword');
+  if(pass)pass.autocomplete=mode==='login'?'current-password':'new-password';
+  $('#authHelper').innerHTML=mode==='login'?'Primeira vez aqui? Toque em <strong>Primeiro acesso</strong>.':'A conta será criada no Supabase do Agenda TL. Depois você ativa o acesso administrativo.';
+  setStatus('');
+  setAuthLoading(false);
+}
+async function session(){const{data}=await db.auth.getSession();return data.session}
+async function isAdmin(){const{data,error}=await db.rpc('my_admin_status');if(error)return false;return data===true}
+async function loadStats(){
+  const[{count:pending},{count:approved}]=await Promise.all([
+    db.from('event_submissions').select('*',{count:'exact',head:true}).eq('status','pending'),
+    db.from('events').select('*',{count:'exact',head:true}).eq('status','approved')
+  ]);
+  $('#pendingCount').textContent=pending||0;$('#approvedCount').textContent=approved||0;$('#totalCount').textContent=(pending||0)+(approved||0)
+}
+async function renderAdmin(){
+  const s=await session();
+  $('#logoutBtn').hidden=!s;
+  if(!s){
+    $('#loginPanel').hidden=false;
+    $('#adminPanel').hidden=true;
+    return;
+  }
+  $('#loginPanel').hidden=true;
+  const ok=await isAdmin();
+  $('#adminPanel').hidden=false;
+  if(!ok){
+    $('#stats').hidden=true;
+    $('#adminList').innerHTML='<div class="empty-admin"><span class="eyebrow">ÚLTIMO PASSO</span><h3>Ative sua administração</h3><p>Sua conta já entrou. Agora use o código de ativação inicial para transformar esta conta na administradora do Agenda TL.</p><div class="bootstrap-box"><input id="bootstrapCode" placeholder="Código de ativação"><button class="btn btn-dark" id="claimAdminBtn">Ativar administrador</button></div></div>';
+    return;
+  }
+  $('#stats').hidden=false;
+  await loadStats();
+  const{data,error}=await db.from('event_submissions').select('*').eq('status','pending').order('created_at',{ascending:true});
+  if(error){console.error(error);$('#adminList').innerHTML='<div class="empty-admin"><h3>Não consegui carregar os envios.</h3><p>Tente atualizar a página.</p></div>';return}
+  const list=data||[];
+  $('#adminList').innerHTML=list.length?list.map(e=>`<article class="admin-card"><div><span class="eyebrow">${esc((e.category_slug||'evento').toUpperCase())}</span><h3>${esc(e.title)}</h3><p>📅 ${esc(e.event_date)} ${e.event_time?'• '+esc(String(e.event_time).slice(0,5)):''} &nbsp; ⌖ ${esc(e.venue_name)}</p><p><b>${esc(e.organizer_name)}</b>${e.contact?' • '+esc(e.contact):''}</p><p>${esc(e.description||'')}</p>${e.price_text?`<p><b>Valor:</b> ${esc(e.price_text)}</p>`:''}</div><div class="admin-actions"><button class="btn btn-dark" data-approve="${e.id}">Aprovar</button><button class="btn btn-danger" data-reject="${e.id}">Recusar</button></div></article>`).join(''):'<div class="empty-admin"><span class="eyebrow">TUDO LIMPO</span><h3>Nenhum evento aguardando</h3><p>Quando alguém enviar um evento pelo portal, ele vai aparecer aqui automaticamente.</p></div>'
+}
+async function handleAuth(e){
+  e.preventDefault();
+  const fd=new FormData(e.currentTarget);
+  const email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||'');
+  if(!email||password.length<6){setStatus('Preencha o e-mail e use uma senha com pelo menos 6 caracteres.');return}
+  setAuthLoading(true);setStatus('');
+  try{
+    if(authMode==='login'){
+      const{error}=await db.auth.signInWithPassword({email,password});
+      if(error)throw error;
+      await renderAdmin();
+    }else{
+      const{data,error}=await db.auth.signUp({email,password});
+      if(error)throw error;
+      if(data.session){toast('Conta criada ✓');await renderAdmin()}
+      else setStatus('Conta criada. Confira seu e-mail para confirmar o cadastro e depois volte para entrar.');
+    }
+  }catch(err){
+    console.error(err);
+    setStatus(authMode==='login'?'Não consegui entrar. Confira e-mail e senha.':'Não consegui criar a conta. Talvez este e-mail já esteja cadastrado.');
+  }finally{setAuthLoading(false)}
+}
+async function claimInitialAdmin(){
+  const input=$('#bootstrapCode'),btn=$('#claimAdminBtn'),code=input?.value.trim();
+  if(!code){toast('Digite o código de ativação');return}
+  btn.disabled=true;btn.textContent='Ativando…';
+  const{data,error}=await db.rpc('claim_initial_admin',{p_code:code});
+  if(error||data!==true){console.error(error);toast('Código inválido ou já utilizado');btn.disabled=false;btn.textContent='Ativar administrador';return}
+  toast('Administrador ativado ✓');await renderAdmin()
+}
+
+$('#loginForm').addEventListener('submit',handleAuth);
+document.querySelectorAll('[data-auth-mode]').forEach(b=>b.addEventListener('click',()=>setAuthMode(b.dataset.authMode)));
+$('#togglePassword').addEventListener('click',()=>{
+  const i=$('#adminPassword'),show=i.type==='password';i.type=show?'text':'password';$('#togglePassword').textContent=show?'◌':'◉'
+});
+$('#logoutBtn').addEventListener('click',async()=>{await db.auth.signOut();setAuthMode('login');renderAdmin()});
+document.addEventListener('click',async e=>{
+  if(e.target.id==='claimAdminBtn'){await claimInitialAdmin();return}
+  const approve=e.target.closest('[data-approve]'),reject=e.target.closest('[data-reject]');
+  if(approve){
+    approve.disabled=true;approve.textContent='Aprovando…';
+    const{error}=await db.rpc('approve_event_submission',{p_submission_id:approve.dataset.approve});
+    if(error){console.error(error);toast('Não foi possível aprovar');approve.disabled=false;approve.textContent='Aprovar';return}
+    toast('Evento publicado ✓');await renderAdmin()
+  }
+  if(reject){
+    reject.disabled=true;reject.textContent='Recusando…';
+    const{error}=await db.rpc('reject_event_submission',{p_submission_id:reject.dataset.reject});
+    if(error){console.error(error);toast('Não foi possível recusar');reject.disabled=false;reject.textContent='Recusar';return}
+    toast('Evento recusado');await renderAdmin()
+  }
+});
+db.auth.onAuthStateChange(()=>setTimeout(renderAdmin,0));
+setAuthMode('login');
+renderAdmin();
