@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <title>Agenda TL — O que fazer em Três Lagoas</title>
+  <meta name="description" content="Descubra eventos, cultura, música, esporte e rolês em Três Lagoas/MS." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Agenda TL - início"><span class="brand-mark">TL</span><span class="brand-copy"><b>Agenda</b><small>TRÊS LAGOAS</small></span></a>
+    <div class="top-actions"><button class="icon-btn" id="searchToggle" aria-label="Buscar">⌕</button><button class="btn btn-dark btn-compact" data-open-submit>+ Evento</button></div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-kicker"><span class="pulse"></span> A cidade acontece aqui</div>
+      <h1>Descubra o que fazer em <em>Três Lagoas.</em></h1>
+      <p>Shows, cultura, gastronomia, esporte e tudo que movimenta a cidade em um só lugar.</p>
+      <div class="searchbox"><span>⌕</span><input id="searchInput" type="search" placeholder="Buscar evento, lugar ou categoria" autocomplete="off" /><button id="clearSearch" aria-label="Limpar busca">×</button></div>
+      <div class="quick-row"><button class="quick active" data-period="all">Todos</button><button class="quick" data-period="today">Hoje</button><button class="quick" data-period="weekend">Fim de semana</button><button class="quick" data-period="free">Grátis</button></div>
+    </section>
+
+    <section class="section categories-section"><div class="section-head"><div><span class="eyebrow">EXPLORE</span><h2>Qual é o seu rolê?</h2></div></div><div class="category-grid" id="categoryGrid"></div></section>
+
+    <section class="section" id="featuredSection"><div class="section-head"><div><span class="eyebrow">EM DESTAQUE</span><h2>Vai acontecer</h2></div><button class="text-btn" data-scroll-events>Ver agenda →</button></div><article class="featured" id="featuredCard"></article></section>
+
+    <section class="section events-section" id="agenda">
+      <div class="section-head"><div><span class="eyebrow">AGENDA</span><h2>Próximos eventos</h2></div><span class="event-count" id="eventCount">Carregando…</span></div>
+      <div class="events-grid" id="eventsGrid"></div>
+      <div class="empty-state" id="emptyState" hidden><span>⌕</span><h3>Nada por aqui ainda</h3><p>Se você produz eventos na cidade, envie gratuitamente para análise.</p><button class="btn btn-dark" data-open-submit>Enviar evento</button></div>
+    </section>
+
+    <section class="submit-banner"><div><span class="eyebrow light">PRODUTORES & ESPAÇOS</span><h2>Seu evento também pode estar aqui.</h2><p>Envie gratuitamente. A publicação passa por revisão antes de entrar na agenda.</p></div><button class="btn btn-light" data-open-submit>Enviar meu evento →</button></section>
+  </main>
+
+  <footer><div class="footer-brand"><span class="brand-mark">TL</span><b>Agenda TL</b></div><p>Uma agenda independente para conectar Três Lagoas.</p><div class="footer-links"><a href="#agenda">Agenda</a><button data-open-submit>Enviar evento</button><a href="admin.html">Admin</a></div><small>Projeto independente • 2026 • Três Lagoas/MS</small></footer>
+
+  <nav class="bottom-nav" aria-label="Navegação móvel"><a href="#top" class="active"><span>⌂</span>Início</a><a href="#agenda"><span>◫</span>Agenda</a><button data-open-submit><span>＋</span>Enviar</button><button id="favoritesBtn"><span>♡</span>Salvos</button></nav>
+
+  <dialog id="eventDialog" class="modal event-modal"><button class="modal-close" data-close-dialog aria-label="Fechar">×</button><div id="eventDialogContent"></div></dialog>
+
+  <dialog id="submitDialog" class="modal submit-modal">
+    <div class="modal-head"><div><span class="eyebrow">DIVULGUE</span><h2>Enviar evento</h2><p>É grátis. O envio fica aguardando aprovação.</p></div><button class="modal-close" data-close-dialog aria-label="Fechar">×</button></div>
+    <form id="submitForm" class="event-form">
+      <label><span>Nome do evento *</span><input name="title" required maxlength="160" placeholder="Ex.: Festival Cultural 2026" /></label>
+      <div class="form-row"><label><span>Data *</span><input name="date" required type="date" /></label><label><span>Horário</span><input name="time" type="time" /></label></div>
+      <label><span>Local *</span><input name="venue" required maxlength="160" placeholder="Nome do espaço" /></label>
+      <label><span>Endereço</span><input name="address" placeholder="Rua, número, bairro" /></label>
+      <div class="form-row"><label><span>Categoria *</span><select id="categorySelect" name="category" required></select></label><label><span>Entrada</span><select name="priceType"><option value="free">Grátis</option><option value="paid">Pago</option></select></label></div>
+      <label><span>Valor (se pago)</span><input name="price" placeholder="Ex.: R$ 25" /></label>
+      <label><span>Descrição *</span><textarea name="description" required minlength="10" maxlength="5000" rows="4" placeholder="Conte o que vai acontecer..."></textarea></label>
+      <label><span>Instagram / WhatsApp / contato</span><input name="contact" placeholder="@perfil ou telefone" /></label>
+      <label><span>Responsável pelo evento *</span><input name="organizer" required maxlength="160" placeholder="Nome, coletivo, empresa ou instituição" /></label>
+      <button class="btn btn-dark btn-full" type="submit">Enviar para aprovação</button>
+      <small class="form-note">Os dados são enviados ao Agenda TL para análise. O evento só aparece publicamente depois de aprovado.</small>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
