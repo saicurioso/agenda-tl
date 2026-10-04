@@ -1,4 +1,4 @@
-const CACHE='agenda-tl-v6';
+const CACHE='agenda-tl-v7';
 const STATIC=['./','./index.html','./styles.css','./app.js','./config.js','./icon.svg','./manifest.webmanifest'];
 
 self.addEventListener('install',event=>{
