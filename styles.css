@@ -6,3 +6,16 @@
 .news-image{width:100%;height:100%;display:block;object-fit:cover}
 .placeholder-badge{position:absolute;left:12px;bottom:12px;z-index:3;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,.93);color:var(--ink);font-size:10px;font-weight:900;letter-spacing:.02em;box-shadow:0 8px 20px rgba(31,41,55,.10)}
 .placeholder-badge:before{content:"✦";color:var(--coral);font-size:11px}
+
+.rsvp-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px;padding-top:12px;border-top:1px solid rgba(31,41,55,.08)}
+.rsvp-count{font-size:11px;font-weight:850;color:var(--muted)}
+.rsvp-btn{border:0;border-radius:999px;padding:8px 12px;background:#fff0eb;color:var(--coral);font-size:11px;font-weight:950;white-space:nowrap}
+.rsvp-btn:hover{background:var(--coral);color:#fff}
+.rsvp-btn.confirmed,.rsvp-btn:disabled.confirmed{background:#dff6e6;color:#277441;opacity:1;cursor:default}
+.attendance-box{display:flex;align-items:center;justify-content:space-between;gap:18px;background:linear-gradient(135deg,#fff0eb,#eee9ff);border-radius:20px;padding:18px;margin:20px 0}
+.attendance-box small{display:block;font-size:9px;font-weight:950;letter-spacing:1px;color:var(--coral)}
+.attendance-box strong{display:block;font-size:20px;margin:4px 0 3px}
+.attendance-box span{display:block;font-size:12px;color:var(--muted)}
+.attendance-btn{border:0;border-radius:999px;background:var(--coral);color:#fff;padding:12px 16px;font-weight:950;white-space:nowrap;box-shadow:0 8px 20px rgba(255,107,74,.18)}
+.attendance-btn.confirmed,.attendance-btn:disabled.confirmed{background:#dff6e6;color:#277441;box-shadow:none;opacity:1;cursor:default}
+@media(max-width:640px){.attendance-box{align-items:flex-start;flex-direction:column}.attendance-btn{width:100%}.rsvp-row{align-items:center}.rsvp-count{font-size:10px}.rsvp-btn{padding:8px 11px}}
