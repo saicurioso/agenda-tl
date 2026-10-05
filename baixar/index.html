@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ff6b4a">
+  <title>Baixar De Rolê</title>
+  <meta name="description" content="Instale o De Rolê no seu celular e descubra o que tá rolando em Três Lagoas.">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <style>
+    :root{--coral:#ff6b4a;--yellow:#ffc247;--violet:#7c5cff;--ink:#1f2937;--sand:#f8f4ee;--muted:#6f6b67}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(160deg,#fffaf5 0%,var(--sand) 52%,#eee9ff 100%);color:var(--ink);display:grid;place-items:center;padding:24px}
+    .card{width:min(460px,100%);background:rgba(255,255,255,.94);border:1px solid rgba(31,41,55,.08);border-radius:34px;box-shadow:0 30px 90px rgba(31,41,55,.14);padding:30px;overflow:hidden;position:relative}
+    .blob{position:absolute;border-radius:50%;filter:blur(2px);opacity:.16}.b1{width:180px;height:180px;background:var(--coral);right:-70px;top:-70px}.b2{width:130px;height:130px;background:var(--violet);left:-65px;bottom:80px}
+    .logo{display:flex;align-items:center;gap:14px;position:relative;z-index:1}.icon{width:76px;height:76px;border-radius:24px;background:#fff8f1;box-shadow:0 10px 30px rgba(31,41,55,.1);display:grid;place-items:center;overflow:hidden}.icon img{width:100%;height:100%;object-fit:cover}
+    .wordmark{font-size:34px;font-weight:950;letter-spacing:-.07em;transform:rotate(-2deg)}.wordmark .de{color:var(--ink)}.wordmark .role{color:var(--coral)}.wordmark small{display:block;font-size:10px;letter-spacing:.08em;color:var(--muted);transform:rotate(2deg);margin-top:7px;text-transform:uppercase}
+    h1{font-size:42px;line-height:.96;letter-spacing:-.055em;margin:34px 0 14px;position:relative;z-index:1}h1 em{font-style:normal;color:var(--coral)}
+    .lead{color:var(--muted);font-size:16px;line-height:1.55;margin:0 0 24px;position:relative;z-index:1}
+    .benefits{display:grid;gap:10px;margin:0 0 25px;position:relative;z-index:1}.benefit{display:flex;gap:10px;align-items:center;background:#fffaf5;border-radius:16px;padding:12px 14px;font-size:13px;font-weight:750}.benefit span{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;background:#eee9ff;color:var(--violet)}
+    button,.link{width:100%;border:0;border-radius:18px;padding:16px 18px;font:inherit;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;cursor:pointer;position:relative;z-index:1}
+    #installBtn{background:var(--coral);color:#fff;box-shadow:0 12px 28px rgba(255,107,74,.25)}#installBtn:disabled{opacity:.72;cursor:default}.link{margin-top:9px;background:#f1ede7;color:var(--ink)}
+    .status{font-size:12px;color:var(--muted);text-align:center;line-height:1.45;margin:14px 4px 0;position:relative;z-index:1}
+    .instructions{display:none;margin-top:18px;background:#fff3cf;border-radius:18px;padding:16px;position:relative;z-index:1}.instructions.show{display:block}.instructions b{display:block;margin-bottom:7px}.instructions ol{padding-left:20px;margin:0;color:#625a46;font-size:13px;line-height:1.6}
+    .tag{display:inline-flex;margin-top:24px;background:#eee9ff;color:#654dde;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;position:relative;z-index:1}
+    @media(max-width:520px){body{padding:14px}.card{border-radius:28px;padding:24px}.icon{width:68px;height:68px;border-radius:21px}.wordmark{font-size:30px}h1{font-size:38px}}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="blob b1"></span><span class="blob b2"></span>
+    <div class="logo">
+      <div class="icon"><img src="../icon.svg" alt=""></div>
+      <div class="wordmark"><span class="de">De</span> <span class="role">Rolê</span><small>Três Lagoas/MS</small></div>
+    </div>
+    <span class="tag">Leve o rolê com você ✦</span>
+    <h1>Instale o <em>De Rolê</em> no celular.</h1>
+    <p class="lead">Acesse a agenda da cidade como um app, direto da tela inicial — rápido e sem precisar procurar o site toda vez.</p>
+    <div class="benefits">
+      <div class="benefit"><span>⌂</span>Ícone na tela inicial</div>
+      <div class="benefit"><span>◉</span>Acesso rápido ao Radar de Rolês</div>
+      <div class="benefit"><span>♡</span>Salve eventos e confirme presença</div>
+    </div>
+    <button id="installBtn">Instalar De Rolê ↓</button>
+    <a class="link" href="../">Continuar pelo navegador</a>
+    <div class="instructions" id="instructions"></div>
+    <p class="status" id="status">A instalação é gratuita e não exige cadastro.</p>
+  </main>
+<script>
+let deferredPrompt=null;
+const btn=document.getElementById('installBtn');
+const status=document.getElementById('status');
+const box=document.getElementById('instructions');
+const ua=navigator.userAgent||'';
+const isiOS=/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
+const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+
+function showInstructions(){
+  box.classList.add('show');
+  if(isiOS){
+    box.innerHTML='<b>No iPhone/iPad:</b><ol><li>Abra esta página no Safari.</li><li>Toque em Compartilhar.</li><li>Escolha “Adicionar à Tela de Início”.</li><li>Mantenha “Abrir como App” ativado e toque em Adicionar.</li></ol>';
+    status.textContent='No iPhone, a instalação é concluída pelo menu do Safari.';
+  }else{
+    box.innerHTML='<b>Se o botão do navegador não aparecer:</b><ol><li>Abra o menu do navegador (⋮).</li><li>Toque em “Instalar app” ou “Adicionar à tela inicial”.</li><li>Confirme a instalação.</li></ol>';
+    status.textContent='Seu navegador também pode oferecer a opção “Instalar app” no menu.';
+  }
+}
+
+if(standalone){
+  btn.textContent='Abrir De Rolê →';
+  status.textContent='O De Rolê já está instalado neste aparelho.';
+}
+
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  if(!standalone){btn.textContent='Instalar De Rolê ↓';status.textContent='Pronto para instalar neste aparelho.'}
+});
+
+btn.addEventListener('click',async()=>{
+  if(standalone){location.href='../';return}
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const choice=await deferredPrompt.userChoice;
+    deferredPrompt=null;
+    if(choice.outcome==='accepted'){
+      status.textContent='Instalação confirmada. O De Rolê vai aparecer na sua tela inicial.';
+      btn.textContent='Instalando…';
+      btn.disabled=true;
+    }else{
+      status.textContent='Tudo bem. Você pode instalar quando quiser.';
+      showInstructions();
+    }
+    return;
+  }
+  showInstructions();
+});
+
+window.addEventListener('appinstalled',()=>{
+  status.textContent='De Rolê instalado ✓';
+  btn.textContent='Abrir De Rolê →';
+  btn.disabled=false;
+  btn.onclick=()=>location.href='../';
+});
+
+if(isiOS&&!standalone){
+  btn.textContent='Como instalar no iPhone';
+  status.textContent='No iPhone, toque abaixo para ver o passo a passo.';
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));
+}
+</script>
+</body>
+</html>
